@@ -1,37 +1,52 @@
-'use client'
+"use client";
 import Link from "next/link";
 import React, { useState } from "react";
-
-interface FormData {
-  email: string;
-  phone: string;
-  username: string;
-  password: string;
-}
+import { useRouter } from "next/navigation";
 
 const SignupPage: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     email: "",
     phone: "",
-    username: "",
     password: "",
   });
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log(formData);
+    const { email, password, phone } = formData;
+
+    try {
+      const response = await fetch("http://localhost:5000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, phone }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message);
+      }
+
+      console.log("User created successfully.");
+      router.push("/");
+    } catch (error: any) {
+      setError(error.message);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="bg-white p-8 rounded-md shadow-md w-96">
         <h2 className="text-2xl font-bold mb-4 text-black">Sign Up</h2>
+        {error && <p className="text-red-500">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-600">
@@ -83,7 +98,7 @@ const SignupPage: React.FC = () => {
           </button>
         </form>
         <div className="pt-2 text-sm text-black">
-          Already have an account? {" "}
+          Already have an account?{" "}
           <Link href="/login">
             <span className="text-blue-500 hover:underline">Login</span>
           </Link>
